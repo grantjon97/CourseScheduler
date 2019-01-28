@@ -12,7 +12,12 @@ namespace CourseSchedulingTool.Controllers
 {
     public class CoursesController : ApiController
     {
-        private readonly SchedulerContext context;
+        private SchedulerContext context;
+
+        public CoursesController()
+        {
+            context = new SchedulerContext();
+        }
 
         public IEnumerable<Course> GetCourses()
         {
