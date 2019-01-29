@@ -7,6 +7,8 @@ using System.Web.Http;
 using System.Data.Entity;
 using CourseSchedulingTool.Persistence;
 using CourseSchedulingTool.Models;
+using CourseSchedulingTool.Conversions;
+using CourseSchedulingTool.ViewModels;
 
 namespace CourseSchedulingTool.Controllers
 {
@@ -19,11 +21,19 @@ namespace CourseSchedulingTool.Controllers
             context = new SchedulerContext();
         }
 
-        public IEnumerable<Course> GetCourses()
+        public IEnumerable<CourseTermViewModel> GetCourses()
         {
-            var courses = context.Courses.ToList();
+            var courseTerms = context.CourseTerms
+                .Include(c => c.Course)
+                .Include(c => c.Term);
 
-            return courses;
+            var courseTermViews = new List<CourseTermViewModel>();
+
+            foreach (var courseTerm in courseTerms){
+                courseTermViews.Add(Conversions.ViewModels.ConvertCourseTerm(courseTerm));
+            };
+
+            return courseTermViews;
         }
     }
 }
