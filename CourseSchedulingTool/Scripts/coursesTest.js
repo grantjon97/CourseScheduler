@@ -4,6 +4,6 @@
     const courseTermViews = await response.json();
 
     courseTermViews.forEach(c => {
-        console.log(c)
+        console.log(c.Title)
     });
 }

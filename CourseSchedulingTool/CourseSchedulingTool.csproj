@@ -102,6 +102,8 @@
     <Compile Include="Migrations\201901272104258_AddPrerequisites.Designer.cs">
       <DependentUpon>201901272104258_AddPrerequisites.cs</DependentUpon>
     </Compile>
+    <Compile Include="Models\Dag.cs" />
+    <Compile Include="Models\Node.cs" />
     <Compile Include="Models\Prerequisite.cs" />
     <Compile Include="Persistence\Migrations\201901270105017_CreateCoursesTable.cs" />
     <Compile Include="Persistence\Migrations\201901270105017_CreateCoursesTable.Designer.cs">
