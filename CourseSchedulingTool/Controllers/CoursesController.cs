@@ -88,7 +88,7 @@ namespace CourseSchedulingTool.Controllers
             var nodeQueue = new List<Node>();
             var startingNode = FindStartingNode(g);
 
-            SearchBFS(g, startingNode, nodeQueue, coursesVisited);
+            SearchBFS(g, startingNode, ref nodeQueue, coursesVisited);
 
             while (nodeQueue.Count > 0)
             {
@@ -96,14 +96,14 @@ namespace CourseSchedulingTool.Controllers
                 nodeQueue.RemoveAt(0);
                 if (nodeRemoved.IsVisited == false)
                 {
-                    SearchBFS(g, nodeRemoved, nodeQueue, coursesVisited);
+                    SearchBFS(g, nodeRemoved, ref nodeQueue, coursesVisited);
                 }
             }
 
             return coursesVisited;
         }
 
-        private void SearchBFS(Dag g, Node v, List<Node> nodeQueue, List<Node> nodesVisited)
+        private void SearchBFS(Dag g, Node v, ref List<Node> nodeQueue, List<Node> nodesVisited)
         {
             nodesVisited.Add(v);
             v.IsVisited = true;
@@ -112,10 +112,10 @@ namespace CourseSchedulingTool.Controllers
             {
                 var nodeInMasterList = g.Nodes.First(c => c.Course == node.Course);
                 nodeQueue.Add(nodeInMasterList);
-
-                // This is a modified BFS that prefers to visit lower level classes first.
-                nodeQueue.OrderBy(n => n.Course.CourseNumber);
             }
+
+            // This is a modified BFS that prefers to visit lower level classes first.
+            nodeQueue = nodeQueue.OrderBy(n => n.Course.CourseNumber).ToList();
         }
 
         private Node FindStartingNode(Dag g)
