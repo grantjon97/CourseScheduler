@@ -105,6 +105,7 @@
     <Compile Include="Models\Dag.cs" />
     <Compile Include="Models\Node.cs" />
     <Compile Include="Models\Prerequisite.cs" />
+    <Compile Include="Models\SemesterSchedule.cs" />
     <Compile Include="Persistence\Migrations\201901270105017_CreateCoursesTable.cs" />
     <Compile Include="Persistence\Migrations\201901270105017_CreateCoursesTable.Designer.cs">
       <DependentUpon>201901270105017_CreateCoursesTable.cs</DependentUpon>
@@ -153,6 +154,7 @@
     <Compile Include="Models\Term.cs" />
     <Compile Include="Persistence\SchedulerContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\QueueSort.cs" />
     <Compile Include="ViewModels\CourseTermViewModel.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@ using System.Web.Http;
 using System.Data.Entity;
 using CourseSchedulingTool.Persistence;
 using CourseSchedulingTool.Models;
+using CourseSchedulingTool.Services;
 using CourseSchedulingTool.Conversions;
 using CourseSchedulingTool.ViewModels;
 
@@ -44,25 +45,41 @@ namespace CourseSchedulingTool.Controllers
 
             var g = BuildGraph(requiredCoursesAndPrerequisites);
 
-            var courseOrder = BFS(g);
-
-            return courseOrder.Select(n => n.Course);
+            return BFS(g, sortByCourseNumber: true, sortByTime: false);
         }
 
         private Dag BuildGraph(List<Prerequisite> prerequisites)
         {
+            /*
+             *  Builds a graph structure out of a list of courses in the database.
+             *  The prerequisites argument is a list of pairs of classes (c1, c2) where c1 requires c2 to be taken first.
+             *  The graph is directed and acyclic.
+             *  
+             *  The resulting DAG is just a list of nodes, where each node has its own adjacency list (edges)
+             */ 
+
             var g = new Dag { Nodes = new List<Node>()};
             var coursesAdded = new List<Course>();
 
+            // Create new nodes for each class that was stored in the DB list.
+            // Each node will currently have a blank adjacency list.
             foreach (var p in prerequisites)
             {
                 if (!coursesAdded.Contains(p.Course))
                 {
                     coursesAdded.Add(p.Course);
-                    g.Nodes.Add(new Node { Course = p.Course, AdjacencyList = null });
+                    var termsOffered = context.CourseTerms
+                                              .Where(c => c.Course.Id == p.Course.Id)
+                                              .Include(c => c.Term)
+                                              .Select(c => c.Term)
+                                              .OrderBy(t => t.StartDate)
+                                              .ToList();
+                    g.Nodes.Add(new Node { Course = p.Course, AdjacencyList = null, TermsOffered = termsOffered });
                 }
             }
 
+            // Create the edges of the graph.
+            // (Each node's adjacency list is filled)
             foreach (var node in g.Nodes)
             {
                 var courseList = prerequisites.Where(c => c.CourseRequired == node.Course)
@@ -82,13 +99,23 @@ namespace CourseSchedulingTool.Controllers
             return g;
         }
 
-        private List<Node> BFS(Dag g)
+        private List<Course> BFS(Dag g, bool sortByCourseNumber, bool sortByTime)
         {
+            /*
+             *  Perform a BFS on a graph.
+             *  
+             *  sortByCourseNumber: When true, schedule the lowest-level classes first.
+             *  sortByTime:         When true, schedule classes as early as possible.
+             *  
+             *  If both sorts are true, first find the classes that are offered earliest, and then
+             *  from those, pick the ones that have the lowest course number. This should be the
+             *  ideal way to perform the BFS.
+             */
             var coursesVisited = new List<Node>();
             var nodeQueue = new List<Node>();
             var startingNode = FindStartingNode(g);
 
-            SearchBFS(g, startingNode, ref nodeQueue, coursesVisited);
+            SearchBFS(g, startingNode, ref nodeQueue, coursesVisited, sortByCourseNumber, sortByTime);
 
             while (nodeQueue.Count > 0)
             {
@@ -96,17 +123,27 @@ namespace CourseSchedulingTool.Controllers
                 nodeQueue.RemoveAt(0);
                 if (nodeRemoved.IsVisited == false)
                 {
-                    SearchBFS(g, nodeRemoved, ref nodeQueue, coursesVisited);
+                    SearchBFS(g, nodeRemoved, ref nodeQueue, coursesVisited, sortByCourseNumber, sortByTime);
                 }
             }
 
-            return coursesVisited;
+            return coursesVisited.Select(c => c.Course).ToList();
         }
 
-        private void SearchBFS(Dag g, Node v, ref List<Node> nodeQueue, List<Node> nodesVisited)
+        private void SearchBFS(Dag g, Node v, ref List<Node> nodeQueue, 
+                               List<Node> nodesVisited, bool sortByCourseNumber, bool sortByTime)
         {
+            /*
+             *  Visits a node v, and adds all of its adjacent nodes to a queue to be visited.
+             *  Maintains a specific order to the queue, depending on if we want to sort the queue
+             *  by date offered, course number, or both.
+             */
+
             nodesVisited.Add(v);
             v.IsVisited = true;
+
+            // Schedule the course
+            // schedule.addCourse(v);
 
             foreach (var node in v.AdjacencyList)
             {
@@ -114,12 +151,17 @@ namespace CourseSchedulingTool.Controllers
                 nodeQueue.Add(nodeInMasterList);
             }
 
-            // This is a modified BFS that prefers to visit lower level classes first.
-            nodeQueue = nodeQueue.OrderBy(n => n.Course.CourseNumber).ToList();
+            // This is where the original BFS algorithm is modified to prefer certain courses first.
+            nodeQueue = QueueSort.Sort(ref nodeQueue, sortByTime, sortByCourseNumber);
         }
 
         private Node FindStartingNode(Dag g)
         {
+            /*
+             *  Finds a starting node for the modified BFS algorithm.
+             *  The starting node (i.e. course) must not have any prerequisites.
+             */ 
+
             var startingNode = g.Nodes[0];
             var found = false;
             var i = 0;
@@ -142,6 +184,7 @@ namespace CourseSchedulingTool.Controllers
             /*  Checks to see if a node is required by any other nodes.
              *  If a node is not required, then it will return false. 
              *  A node that is not required means it is a class with no prerequisites.
+             *  This function is used to find a starting node for the BFS.
              */ 
 
             var inAdjacencyList = false;
