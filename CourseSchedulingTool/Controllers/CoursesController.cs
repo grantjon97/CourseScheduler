@@ -22,7 +22,7 @@ namespace CourseSchedulingTool.Controllers
             context = new SchedulerContext();
         }
 
-        public IEnumerable<Course> GetCourses()
+        public Schedule GetCourses()
         {
             var requiredCourses = context.Requirements
                 .Include(c => c.Major)
@@ -44,8 +44,21 @@ namespace CourseSchedulingTool.Controllers
                  .ToList();
 
             var g = BuildGraph(requiredCoursesAndPrerequisites);
+            var orderOfCourses = BFS(g, sortByCourseNumber: true, sortByTime: false);
 
-            return BFS(g, sortByCourseNumber: true, sortByTime: false);
+            var schedule = new Schedule(context.Terms
+                                               .OrderBy(t => t.StartDate)
+                                               .Where(t => t.StartDate > DateTime.Now)
+                                               .ToList());
+
+            // Add each course to the schedule. This converts the
+            // list of courses to a schedule with semesters.
+            foreach (var node in orderOfCourses)
+            {
+                schedule.AddCourse(node);
+            }
+
+            return schedule;
         }
 
         private Dag BuildGraph(List<Prerequisite> prerequisites)
@@ -99,7 +112,7 @@ namespace CourseSchedulingTool.Controllers
             return g;
         }
 
-        private List<Course> BFS(Dag g, bool sortByCourseNumber, bool sortByTime)
+        private List<Node> BFS(Dag g, bool sortByCourseNumber, bool sortByTime)
         {
             /*
              *  Perform a BFS on a graph.
@@ -127,7 +140,7 @@ namespace CourseSchedulingTool.Controllers
                 }
             }
 
-            return coursesVisited.Select(c => c.Course).ToList();
+            return coursesVisited.ToList();
         }
 
         private void SearchBFS(Dag g, Node v, ref List<Node> nodeQueue, 
@@ -142,12 +155,9 @@ namespace CourseSchedulingTool.Controllers
             nodesVisited.Add(v);
             v.IsVisited = true;
 
-            // Schedule the course
-            // schedule.addCourse(v);
-
             foreach (var node in v.AdjacencyList)
             {
-                var nodeInMasterList = g.Nodes.First(c => c.Course == node.Course);
+                var nodeInMasterList = g.Nodes.First(c => c.Course.Id == node.Course.Id);
                 nodeQueue.Add(nodeInMasterList);
             }
 
