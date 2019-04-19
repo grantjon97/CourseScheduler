@@ -22,7 +22,7 @@ namespace CourseSchedulingTool.Controllers
             context = new SchedulerContext();
         }
 
-        public Schedule GetCourses()
+        public IHttpActionResult GetCourses()
         {
             var requiredCourses = context.Requirements
                 .Include(c => c.Major)
@@ -46,10 +46,11 @@ namespace CourseSchedulingTool.Controllers
             var g = BuildGraph(requiredCoursesAndPrerequisites);
             var orderOfCourses = BFS(g, sortByCourseNumber: true, sortByTime: false);
 
-            var schedule = new Schedule(context.Terms
+            var schedule = new Schedule(availableTerms: context.Terms
                                                .OrderBy(t => t.StartDate)
                                                .Where(t => t.StartDate > DateTime.Now)
-                                               .ToList());
+                                               .ToList(),
+                                        _orderOfCourses: orderOfCourses);
 
             // Add each course to the schedule. This converts the
             // list of courses to a schedule with semesters.
@@ -58,7 +59,7 @@ namespace CourseSchedulingTool.Controllers
                 schedule.AddCourse(node);
             }
 
-            return schedule;
+            return Ok(schedule.SemesterSchedules);
         }
 
         private Dag BuildGraph(List<Prerequisite> prerequisites)

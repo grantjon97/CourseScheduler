@@ -21,9 +21,10 @@ namespace CourseSchedulingTool.Models
     public class Schedule : ApiController
     {
         public List<SemesterSchedule> SemesterSchedules { get; set; }
-        private SchedulerContext context;
+        private readonly List<Node> orderOfCourses;
+        private readonly SchedulerContext context;
 
-        public Schedule(List<Term> availableTerms)
+        public Schedule(List<Term> availableTerms, List<Node> _orderOfCourses)
         {
             /*
              * Class constructor -- Initialize the Schedule object with one semester, with no
@@ -31,6 +32,7 @@ namespace CourseSchedulingTool.Models
              */
             SemesterSchedules = new List<SemesterSchedule> { };
 
+            orderOfCourses = _orderOfCourses;
             context = new SchedulerContext();
         }
 
@@ -39,11 +41,7 @@ namespace CourseSchedulingTool.Models
             var termsCourseIsOffered = node.TermsOffered
                                            .OrderBy(t => t.StartDate)
                                            .ToList();
-            //var termsCourseIsOffered = context.CourseTerms
-            //                                    .Where(t => t.Course.Id == node.Course.Id)
-            //                                    .Select(t => t.Term)
-            //                                    .OrderBy(t => t.StartDate)
-            //                                    .ToList();
+
             var done = false;
             var i = 0;
             while (!done && i < termsCourseIsOffered.Count)
@@ -78,14 +76,14 @@ namespace CourseSchedulingTool.Models
              * 
              * Rules:
              * 1) The term being looked at must be after all terms that contain prerequisites.
-             * 2) Adding the course cannot make the current term exceed 18 credits.
+             * 2) Adding the course cannot make the current term exceed 9 credits.
              */
 
             // Check that adding the course would not overload credits
             float creditCount = node.Course.Credits;
             foreach (var course in SemesterSchedules[SemesterSchedules.FindIndex(t => t.Term.Id == term.Id)].Courses)
                 creditCount += course.Credits;
-            if (creditCount > 18)
+            if (creditCount > 9)
                 return false;
 
             // Gather all courses that the current course requires.
@@ -113,14 +111,33 @@ namespace CourseSchedulingTool.Models
              *                     current course's adjacency list, then all prerequisites have been accounted for.
              */
 
+            // The BFS returned an order of courses based off class level. The order returned by the BFS may reflect some
+            // pseudo-prerequisites. For example, CS 348 can be taken directly after CS 131, but the BFS will push
+            // CS 348 back to be taken after some lower level classes. Here, check that the course is not being taken
+            // before any classes in the order returned by the BFS, whether or not they're actually prerequisites.
             var prerequisiteCount = 0;
+            //var orderOfCoursesBefore = orderOfCourses.Take(orderOfCourses.FindIndex(n => n.Course.Id == node.Course.Id)).ToList();
+            //foreach (var _node in orderOfCoursesBefore)
+            //{
+            //    var semestersUpToThisTerm = SemesterSchedules.Where(t => t.Term.StartDate <= term.StartDate);
+
+            //    foreach (var semesterBefore in semestersUpToThisTerm)
+            //    {
+            //        if (semesterBefore.Courses.Any(c => c.Id == _node.Course.Id))
+            //            prerequisiteCount++;
+            //    }
+            //}
+            //if (prerequisiteCount != orderOfCoursesBefore.Count)
+            //    return false;
+
+            prerequisiteCount = 0;
             foreach (var prerequite in prerequisites)
             {
                 var semestersBeforeThisTerm = SemesterSchedules.Where(t => t.Term.StartDate < term.StartDate);
 
                 foreach (var semesterBefore in semestersBeforeThisTerm)
                 {
-                    if (semesterBefore.Courses.Where(c => c.Id == prerequite.Id).ToList().Count == 1)
+                    if (semesterBefore.Courses.Any(c => c.Id == prerequite.Id))
                         prerequisiteCount++;
                 }
             }
