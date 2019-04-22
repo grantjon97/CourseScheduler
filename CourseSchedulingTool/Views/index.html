@@ -5,16 +5,34 @@
     <meta charset="utf-8" />
     <title>CUNE Scheduling Tool</title>
 
+    <!-- CSS -->
+    <link rel="stylesheet" href="../Content/bootstrap.css" />
+
     <!-- Scripts -->
     <script src="../Scripts/coursesTest.js"></script>
+    <script src="../Scripts/majors.js"></script>
     <script src="../Scripts/jquery-3.3.1.min.js"></script>
+    <script src="../Scripts/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
-    <button type="button" onclick="showCourses()">test</button>
+    <select id="selectList">
+        <option value="0">Select a major</option>
+    </select>
     <br />
-    <ul id="courseList">
-    </ul>
+    <div id="semesterPanels"></div>
 </body>
 
 </html>
+
+<script>
+    $(document).ready(function () {
+        majorsDropDownList();
+    });
+
+    $("#selectList").change(function () {
+        if ($("#selectList").val() != "0") {
+            showCourses($("#selectList").val());
+        }
+    });
+</script>

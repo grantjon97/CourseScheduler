@@ -8,8 +8,6 @@ using System.Data.Entity;
 using CourseSchedulingTool.Persistence;
 using CourseSchedulingTool.Models;
 using CourseSchedulingTool.Services;
-using CourseSchedulingTool.Conversions;
-using CourseSchedulingTool.ViewModels;
 
 namespace CourseSchedulingTool.Controllers
 {
@@ -22,12 +20,12 @@ namespace CourseSchedulingTool.Controllers
             context = new SchedulerContext();
         }
 
-        public IHttpActionResult GetCourses()
+        public IHttpActionResult GetCourses(int id)
         {
             var requiredCourses = context.Requirements
                 .Include(c => c.Major)
                 .Include(c => c.Course)
-                .Where(c => (c.Major.Id == 1) && (c.IsElective == false))
+                .Where(c => (c.Major.Id == id) && (c.IsElective == false))
                 .ToList();
 
             var prerequisites = context.Prerequisites
@@ -59,7 +57,7 @@ namespace CourseSchedulingTool.Controllers
                 schedule.AddCourse(node);
             }
 
-            return Ok(schedule.SemesterSchedules);
+            return Ok(schedule.SemesterSchedules.OrderBy(s => s.Term.StartDate));
         }
 
         private Dag BuildGraph(List<Prerequisite> prerequisites)
