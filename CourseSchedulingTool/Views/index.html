@@ -7,6 +7,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="../Content/bootstrap.css" />
+    <link rel="stylesheet" href="../Content/Site.css" />
 
     <!-- Scripts -->
     <script src="../Scripts/coursesTest.js"></script>
@@ -16,14 +17,22 @@
 </head>
 
 <body>
-    <select id="selectList">
-        <option value="0">Select a major</option>
-    </select>
+    <h1 class="cune-header">Concordia University Nebraska</h1>
+    <h3 class="cune-header">Undergraduate Course Scheduler</h3>
+    <div style="text-align:center">
+        <select id="selectList">
+            <option value="0">Select a major</option>
+        </select>
+    </div>
     <br />
     <div id="semesterPanels"></div>
 </body>
 
 </html>
+
+<footer>
+    <h3 id="electives" class="cune-header"></h3>
+</footer>
 
 <script>
     $(document).ready(function () {

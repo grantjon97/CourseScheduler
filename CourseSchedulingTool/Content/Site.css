@@ -1,6 +1,7 @@
 ﻿body {
-    padding-top: 50px;
+    padding-top: 15px;
     padding-bottom: 20px;
+    background-color: #002855;
 }
 
 /* Set padding to keep content from hitting the edges */
@@ -14,5 +15,34 @@ input,
 select,
 textarea {
     max-width: 280px;
+    margin: 10px;
+    padding-bottom:5px;
 }
 
+.cune-header {
+    text-align:center;
+    color:white;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.col {
+    height: 200px;
+    background-color: lightgrey;
+    margin: 25px;
+    border-style: solid;
+    border-color: white;
+    border-width: thick;
+}
+
+.col-left {
+    margin-left: 50px;
+}
+
+.col-right {
+    margin-right: 50px;
+}
+
+tfoot {
+    border-top: #002855;
+    border-top-style: solid;
+}

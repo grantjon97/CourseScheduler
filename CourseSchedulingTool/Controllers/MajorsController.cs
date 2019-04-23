@@ -29,5 +29,21 @@ namespace CourseSchedulingTool.Controllers
               
             return Ok(formattedMajors);
         }
+
+        public IHttpActionResult GetElectives(int id)
+        {
+            var electives = context.Requirements
+                .Where(r => r.Major.Id == id && r.IsElective == true)
+                .Select(r => r.Course)
+                .ToList();
+
+            var numberOfElectivesNeeded = context.Majors
+                .FirstOrDefault(m => m.Id == id).NumberOfElectivesNeeded;
+
+            // Return something that looks similar to a course schedule object,
+            // so that javascript can build a table for electives too.
+            return Ok(new { numberOfElectivesNeeded, courses = electives });
+
+        }
     }
 }
